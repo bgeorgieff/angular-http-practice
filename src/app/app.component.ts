@@ -1,5 +1,6 @@
 import { Component, OnInit } from "@angular/core";
-import { HttpClient } from "@angular/common/http";
+import { Post } from "./post.model";
+import { PostsServiceService } from "./posts-service.service";
 
 @Component({
   selector: "app-root",
@@ -7,25 +8,39 @@ import { HttpClient } from "@angular/common/http";
   styleUrls: ["./app.component.css"],
 })
 export class AppComponent implements OnInit {
-  loadedPosts = [];
+  loadedPosts: Post[] = [];
+  isLoading = false;
+  error = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(private postService: PostsServiceService) {}
 
-  ngOnInit() {}
+  ngOnInit(): void {
+    this.onFetchPosts();
+  }
 
-  onCreatePost(postData: { title: string; content: string }) {
+  onCreatePost(postData: Post) {
     // Send Http request
-    this.http.post(
-      "https://angular-course-8a2ac-default-rtdb.europe-west1.firebasedatabase.app/posts.json",
-      postData
-    );
+
+    this.postService.postNewPost(postData.title, postData.content);
   }
 
   onFetchPosts() {
-    // Send Http request
+    this.isLoading = true;
+    this.postService.getAllPosts().subscribe(
+      (posts) => {
+        this.isLoading = false;
+        this.postService.loadedPosts = this.loadedPosts = posts;
+      },
+      (error) => {
+        this.isLoading = false;
+        this.error = error.message;
+      }
+    );
   }
 
   onClearPosts() {
-    // Send Http request
+    this.postService.deletePosts().subscribe(() => {
+      this.postService.loadedPosts = this.loadedPosts = [];
+    });
   }
 }
